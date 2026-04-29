@@ -53,6 +53,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Routes
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.use('/', authRoutes);
 app.use('/tasks', taskRoutes);
 
