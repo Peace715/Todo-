@@ -12,15 +12,26 @@ const authRoutes = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+let dbConnectionPromise = null;
 
 async function connectDB() {
   if (mongoose.connection.readyState !== 0) {
     return mongoose.connection;
   }
 
-  await mongoose.connect(process.env.MONGO_URI);
-  console.log('MongoDB Connected');
-  return mongoose.connection;
+  if (!dbConnectionPromise) {
+    dbConnectionPromise = mongoose.connect(process.env.MONGO_URI)
+      .then((connection) => {
+        console.log('MongoDB Connected');
+        return connection.connection;
+      })
+      .catch((error) => {
+        dbConnectionPromise = null;
+        throw error;
+      });
+  }
+
+  return dbConnectionPromise;
 }
 
 // Middleware
@@ -57,6 +68,19 @@ app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
+app.use(async (req, res, next) => {
+  if (process.env.NODE_ENV === 'test') {
+    return next();
+  }
+
+  try {
+    await connectDB();
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+});
+
 app.use('/', authRoutes);
 app.use('/tasks', taskRoutes);
 
@@ -72,4 +96,6 @@ if (require.main === module) {
   connectDB().catch((err) => console.log(err));
 }
 
-module.exports = { app, connectDB };
+module.exports = app;
+module.exports.app = app;
+module.exports.connectDB = connectDB;
