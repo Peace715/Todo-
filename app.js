@@ -61,17 +61,15 @@ app.use('/', authRoutes);
 app.use('/tasks', taskRoutes);
 
 if (require.main === module) {
-  connectDB()
-    .then(() => {
-      app.listen(PORT, () => {
-        console.log(`
+  app.listen(PORT, () => {
+    console.log(`
  Server is running!
  URL: http://localhost:${PORT}
  Environment: ${process.env.NODE_ENV || 'development'}
   `);
-      });
-    })
-    .catch((err) => console.log(err));
+  });
+
+  connectDB().catch((err) => console.log(err));
 }
 
 module.exports = { app, connectDB };

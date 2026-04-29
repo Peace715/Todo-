@@ -471,12 +471,22 @@ input {
   line-height: 1.6;
 }
 
+.reminder-note {
+  margin: -8px 0 18px;
+  font-size: 0.92rem;
+}
+
 .task-form {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1.4fr) minmax(210px, 0.8fr) auto;
 }
 
 .task-form .text-input {
   min-width: 0;
+}
+
+.task-title-input,
+.time-input {
+  width: 100%;
 }
 
 .list-panel {
@@ -526,6 +536,13 @@ input {
   gap: 8px;
 }
 
+.task-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .task-title {
   font-size: 1.04rem;
   line-height: 1.5;
@@ -539,6 +556,25 @@ input {
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  background: rgba(34, 27, 22, 0.07);
+  color: var(--muted);
+}
+
+.task-due {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  background: rgba(217, 107, 43, 0.12);
+  color: var(--accent-deep);
+}
+
+.task-due.overdue {
+  background: rgba(184, 59, 59, 0.14);
+  color: var(--danger);
+}
+
+.task-due.no-due {
   background: rgba(34, 27, 22, 0.07);
   color: var(--muted);
 }

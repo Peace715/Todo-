@@ -9,6 +9,7 @@
 <body class="page-shell">
   <% const completedTasks = tasks.filter(task => task.status === 'completed').length; %>
   <% const pendingTasks = tasks.length - completedTasks; %>
+  <% const reminderTasks = tasks.filter(task => task.status === 'pending' && task.dueAt); %>
 
   <main class="dashboard-shell">
     <div class="dashboard-topbar">
@@ -57,13 +58,22 @@
         <p class="panel-copy">
           Keep it short and concrete so the next action is easy to pick up later.
         </p>
+        <p class="muted-copy reminder-note">
+          Keep this page open and tap anywhere once so reminder sound can play when a task is due.
+        </p>
 
         <% if (typeof error !== 'undefined') { %>
           <p class="error"><%= error %></p>
         <% } %>
 
         <form method="POST" action="/tasks/add" class="task-form">
-          <input name="title" class="text-input" placeholder="Enter a new task..." required />
+          <input name="title" class="text-input task-title-input" placeholder="Enter a new task..." required />
+          <input
+            id="dueAt"
+            name="dueAt"
+            type="datetime-local"
+            class="text-input time-input"
+          />
           <button type="submit" class="primary-btn">Add Task</button>
         </form>
       </aside>
@@ -89,7 +99,17 @@
           <div class="task-card <%= task.status === 'completed' ? 'completed' : '' %>">
             <div class="task-meta">
               <strong class="task-title"><%= task.title %></strong>
-              <span class="task-status"><%= task.status %></span>
+              <div class="task-details">
+                <span class="task-status"><%= task.status %></span>
+                <% if (task.dueAt) { %>
+                  <% const isOverdue = task.status === 'pending' && new Date(task.dueAt) < now; %>
+                  <span class="task-due <%= isOverdue ? 'overdue' : '' %>">
+                    Due <%= new Date(task.dueAt).toLocaleString() %>
+                  </span>
+                <% } else { %>
+                  <span class="task-due no-due">No reminder set</span>
+                <% } %>
+              </div>
             </div>
 
             <div class="task-actions">
@@ -112,5 +132,141 @@
       <p>&copy; 2026 Task Manager App</p>
     </div>
   </main>
+
+  <script>
+    const reminderTasks = <%- JSON.stringify(
+      reminderTasks.map((task) => ({
+        id: String(task._id),
+        title: task.title,
+        dueAt: task.dueAt
+      }))
+    ) %>;
+
+    const dueAtInput = document.getElementById('dueAt');
+
+    if (dueAtInput) {
+      const localNow = new Date();
+      localNow.setMinutes(localNow.getMinutes() - localNow.getTimezoneOffset());
+      dueAtInput.min = localNow.toISOString().slice(0, 16);
+    }
+
+    const storedReminderIds = JSON.parse(window.localStorage.getItem('remindedTaskIds') || '[]');
+    const remindedTaskIds = new Set(storedReminderIds);
+    let reminderAudioContext = null;
+    let audioUnlocked = false;
+
+    function persistReminderIds() {
+      window.localStorage.setItem('remindedTaskIds', JSON.stringify(Array.from(remindedTaskIds)));
+    }
+
+    function unlockReminderAudio() {
+      if (audioUnlocked) {
+        return;
+      }
+
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+      if (!AudioContextClass) {
+        audioUnlocked = true;
+        return;
+      }
+
+      try {
+        if (!reminderAudioContext) {
+          reminderAudioContext = new AudioContextClass();
+        }
+
+        if (reminderAudioContext.state === 'suspended') {
+          reminderAudioContext.resume();
+        }
+
+        audioUnlocked = true;
+      } catch (error) {
+        console.error('Unable to unlock reminder audio:', error);
+      }
+    }
+
+    ['click', 'touchstart', 'keydown'].forEach((eventName) => {
+      window.addEventListener(eventName, unlockReminderAudio, { once: true });
+    });
+
+    function playReminderTone() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+      if (!AudioContextClass) {
+        return;
+      }
+
+      try {
+        if (!reminderAudioContext) {
+          reminderAudioContext = new AudioContextClass();
+        }
+
+        const startAt = reminderAudioContext.currentTime;
+
+        [0, 0.32, 0.64].forEach((offset) => {
+          const oscillator = reminderAudioContext.createOscillator();
+          const gainNode = reminderAudioContext.createGain();
+
+          oscillator.type = 'square';
+          oscillator.frequency.setValueAtTime(880, startAt + offset);
+          gainNode.gain.setValueAtTime(0.0001, startAt + offset);
+          gainNode.gain.exponentialRampToValueAtTime(0.18, startAt + offset + 0.02);
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + offset + 0.22);
+
+          oscillator.connect(gainNode);
+          gainNode.connect(reminderAudioContext.destination);
+          oscillator.start(startAt + offset);
+          oscillator.stop(startAt + offset + 0.24);
+        });
+      } catch (error) {
+        console.error('Unable to play reminder sound:', error);
+      }
+    }
+
+    function sendTaskReminder(task) {
+      if (remindedTaskIds.has(task.id)) {
+        return;
+      }
+
+      remindedTaskIds.add(task.id);
+      persistReminderIds();
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Task reminder', {
+          body: '"' + task.title + '" is due now.'
+        });
+      }
+
+      if (audioUnlocked) {
+        playReminderTone();
+      }
+
+      if ('vibrate' in navigator) {
+        navigator.vibrate([250, 120, 250, 120, 250]);
+      }
+
+      window.alert('Reminder: "' + task.title + '" is due now.');
+    }
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
+    function checkTaskReminders() {
+      const now = Date.now();
+
+      reminderTasks.forEach((task) => {
+        const dueTime = new Date(task.dueAt).getTime();
+
+        if (!Number.isNaN(dueTime) && dueTime <= now) {
+          sendTaskReminder(task);
+        }
+      });
+    }
+
+    checkTaskReminders();
+    window.setInterval(checkTaskReminders, 30000);
+  </script>
 </body>
 </html>
