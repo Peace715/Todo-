@@ -1,16 +1,1 @@
-services:
-  - type: web
-    name: todo-application
-    runtime: node
-    plan: free
-    buildCommand: npm install
-    startCommand: npm start
-    autoDeployTrigger: commit
-    healthCheckPath: /healthz
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGO_URI
-        sync: false
-      - key: SESSION_SECRET
-        generateValue: true
+
