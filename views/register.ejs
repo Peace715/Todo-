@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <link rel="icon" href="/images/logo.png" type="image/png">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="page-shell">
+  <main class="auth-layout">
+    <section class="auth-hero">
+      <div class="auth-brand">
+        <div class="eyebrow">Start with a lighter system</div>
+        <h1 class="display-title">Turn busy days into clear next steps.</h1>
+        <p class="auth-copy">
+          Create an account, collect the tasks you care about, and keep your momentum
+          without juggling sticky notes and memory.
+        </p>
+
+        <div class="auth-highlights">
+          <div class="highlight-card">
+            <strong>Simple</strong>
+            <span>designed for quick daily use</span>
+          </div>
+          <div class="highlight-card">
+            <strong>Flexible</strong>
+            <span>use it for work, school, or home</span>
+          </div>
+          <div class="highlight-card">
+            <strong>Fresh start</strong>
+            <span>your own list from day one</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote-card">
+        <p>"A clear list lowers the friction. The day feels easier when the next move is visible."</p>
+        <span>Planning principle</span>
+      </div>
+    </section>
+
+    <section class="auth-card">
+      <div class="auth-header">
+        <div class="eyebrow">New account</div>
+        <h2 class="auth-title">Register</h2>
+        <p class="auth-subtitle">Set up your space and start organizing what matters.</p>
+      </div>
+
+      <% if (typeof error !== 'undefined') { %>
+        <p class="error"><%= error %></p>
+      <% } %>
+
+      <form method="POST" action="/register" class="auth-form">
+        <div>
+          <label for="username" class="field-label">Username</label>
+          <input id="username" name="username" class="text-input" placeholder="Choose a username" required />
+        </div>
+
+        <div>
+          <label for="password" class="field-label">Password</label>
+          <div class="password-field">
+            <input id="password" name="password" type="password" class="text-input password-input" placeholder="Create a password" required />
+            <button type="button" class="password-toggle" aria-label="Show password" aria-pressed="false" data-password-toggle>
+              <span aria-hidden="true">Show</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="primary-btn">Create Account</button>
+      </form>
+
+      <p class="auth-footer">
+        Already have an account? <a href="/login">Login instead</a>
+      </p>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll('[data-password-toggle]').forEach((toggleButton) => {
+      const passwordInput = toggleButton.parentElement.querySelector('.password-input');
+
+      toggleButton.addEventListener('click', () => {
+        const shouldShowPassword = passwordInput.type === 'password';
+        passwordInput.type = shouldShowPassword ? 'text' : 'password';
+        toggleButton.setAttribute('aria-pressed', String(shouldShowPassword));
+        toggleButton.setAttribute('aria-label', shouldShowPassword ? 'Hide password' : 'Show password');
+        toggleButton.querySelector('span').textContent = shouldShowPassword ? 'Hide' : 'Show';
+      });
+    });
+  </script>
+</body>
+</html>

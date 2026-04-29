@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { max-width: 500px; margin: 40px auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    h1 { text-align: center; }
+    form { display: flex; gap: 10px; margin-bottom: 1em; }
+    input[type="text"] { flex: 1; padding: 0.5em; }
+    button { padding: 0.5em 1em; }
+    ul { list-style: none; padding: 0; }
+    li { background: #eee; margin-bottom: 0.5em; padding: 0.5em; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .completed { text-decoration: line-through; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Todo App</h1>
+    <form id="todo-form">
+      <input type="text" id="todo-input" placeholder="Add a new task..." required>
+      <button type="submit">Add</button>
+    </form>
+    <ul id="todo-list"></ul>
+  </div>
+  <script>
+    const form = document.getElementById('todo-form');
+    const input = document.getElementById('todo-input');
+    const list = document.getElementById('todo-list');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (text) {
+        addTask(text);
+        input.value = '';
+      }
+    });
+
+    function addTask(text) {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span>${text}</span>
+        <button onclick="completeTask(this)">Complete</button>
+        <button onclick="deleteTask(this)">Delete</button>
+      `;
+      list.appendChild(li);
+    }
+
+    window.completeTask = function(btn) {
+      btn.parentElement.querySelector('span').classList.toggle('completed');
+    };
+
+    window.deleteTask = function(btn) {
+      btn.parentElement.remove();
+    };
+  </script>
+</body>
+</html>

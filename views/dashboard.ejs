@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="page-shell">
+  <% const completedTasks = tasks.filter(task => task.status === 'completed').length; %>
+  <% const pendingTasks = tasks.length - completedTasks; %>
+
+  <main class="dashboard-shell">
+    <div class="dashboard-topbar">
+      <div class="brand-chip">
+        <div>
+          <strong>Task Manager</strong>
+          <span>Personal focus dashboard</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <span class="welcome-copy">Signed in as <strong><%= user.username %></strong></span>
+        <a href="/logout" class="secondary-btn">Logout</a>
+      </div>
+    </div>
+
+    <section class="dashboard-grid">
+      <div class="dashboard-hero">
+        <div class="dashboard-hero-inner">
+          <div class="eyebrow">Today&apos;s workflow</div>
+          <h1 class="dashboard-title">Make progress feel visible.</h1>
+          <p class="dashboard-copy">
+            Capture what needs attention, finish what you can, and let the list reflect
+            the work you&apos;re actually moving through.
+          </p>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <span class="stat-value"><%= tasks.length %></span>
+              <span class="stat-label">Total tasks</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value"><%= pendingTasks %></span>
+              <span class="stat-label">Still in motion</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value"><%= completedTasks %></span>
+              <span class="stat-label">Wrapped up</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="dashboard-panel">
+        <h2 class="panel-title">Add a new task</h2>
+        <p class="panel-copy">
+          Keep it short and concrete so the next action is easy to pick up later.
+        </p>
+
+        <% if (typeof error !== 'undefined') { %>
+          <p class="error"><%= error %></p>
+        <% } %>
+
+        <form method="POST" action="/tasks/add" class="task-form">
+          <input name="title" class="text-input" placeholder="Enter a new task..." required />
+          <button type="submit" class="primary-btn">Add Task</button>
+        </form>
+      </aside>
+    </section>
+
+    <section class="dashboard-panel list-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Your task list</h2>
+          <p class="muted-copy">Complete what&apos;s done, remove what no longer belongs.</p>
+        </div>
+        <span class="task-count"><%= tasks.length %></span>
+      </div>
+
+      <div class="tasks-list">
+        <% if (tasks.length === 0) { %>
+          <div class="empty-state">
+            <p>No tasks yet. Add one above and give the day a clear starting point.</p>
+          </div>
+        <% } %>
+
+        <% tasks.forEach(task => { %>
+          <div class="task-card <%= task.status === 'completed' ? 'completed' : '' %>">
+            <div class="task-meta">
+              <strong class="task-title"><%= task.title %></strong>
+              <span class="task-status"><%= task.status %></span>
+            </div>
+
+            <div class="task-actions">
+              <% if (task.status === 'pending') { %>
+                <form method="POST" action="/tasks/complete/<%= task._id %>">
+                  <button class="icon-btn complete-btn" aria-label="Complete task">&#10004;</button>
+                </form>
+              <% } %>
+
+              <form method="POST" action="/tasks/delete/<%= task._id %>">
+                <button class="icon-btn delete-btn" aria-label="Delete task">&#10006;</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+
+    <div class="footer">
+      <p>&copy; 2026 Task Manager App</p>
+    </div>
+  </main>
+</body>
+</html>
